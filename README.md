@@ -10,6 +10,20 @@ composer require sashsvamir/yii2-recaptchav3:"dev-master"
 ```
 
 
+
+Configure:
+Add keys to param config `common/config/params.php`:
+```php
+<?
+return [
+    // NOTE:
+    'google.recaptcha3.public' => '',
+	'google.recaptcha3.secret' => '',
+];
+```
+
+
+
 Add validator to model:
 
 ```php

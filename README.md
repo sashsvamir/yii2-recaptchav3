@@ -3,6 +3,13 @@
 
 
 
+
+Install package:
+```sh
+composer require sashsvamir/yii2-recaptchav3:"dev-master"
+```
+
+
 Add validator to model:
 
 ```php

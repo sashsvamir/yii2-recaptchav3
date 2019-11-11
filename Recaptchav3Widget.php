@@ -11,7 +11,7 @@ use yii\widgets\InputWidget;
  * For example:
  *
  * ```php
- * <?= $form->field($model, 'Recaptchav3')->widget(Recaptchav3::className()) ?>
+ * <?= $form->field($model, 'verifyCode')->widget(Recaptchav3::className()) ?>
  * // or:
  * <?= Recaptchav3::widget(['name' => 'recaptcha', 'publicKey' => 'public key']) ?>
  * ```
@@ -28,9 +28,6 @@ class Recaptchav3Widget extends InputWidget
 
 	public $requestAction = 'feedback_form';
 
-    public $options = [
-        'value' => '', // on every render attribute value should be empty (to prevent "timeout-or-duplicate" error)
-    ];
 
 	/**
 	 * @inheritdoc
@@ -51,6 +48,9 @@ class Recaptchav3Widget extends InputWidget
 	public function run()
 	{
 		$this->field->label(false);
+
+        // on every render attribute value should be empty (to prevent 'timeout-or-duplicate' error)
+		$this->model->{$this->attribute} = '';
 
 		$arguments = http_build_query([
 			'render' => $this->publicKey,
@@ -80,27 +80,30 @@ class Recaptchav3Widget extends InputWidget
         //   - если у формы стоит класс 'ajax-loading' пропускаем обработку (токен а процессе получения)
         // - иначе, возвращяем из обработчика 'false' (чтобы предотвратить нативную отправку) и делаем ajax запрос используя данные формы
 
-        $js = /** @lang JavaScript */"			
-			var form = $('#{$formId}'); // get activeForm
-            var attr = form.find('#{$inputId}'); // get attribute field
+        $js = /** @lang JavaScript */"
+	
+            var form = $('#{$formId}'); // get activeForm
+            
+            // add event handler (before yii js submit the form, prepare recaptcha token from google)
+            form.on('beforeSubmit', function (e) {
+                var form = $(e.target) // define form again, cause 'form' var will be replaced on using this script several times (on mupltiply captchas in one page)
+                var attr = form.find('#{$inputId}'); // get attribute field
+                // console.log('widget: beforeSubmit')
 
-			// add event handler (before yii js submit the form, prepare recaptcha token from google)
-			form.on('beforeSubmit', function (e) {
-			    // console.log('widget: beforeSubmit')
+                form.addClass('ajax-loading'); // show ajax indicator, also this leads to stop ajax submit of frame form
 
-				form.addClass('ajax-loading'); // show ajax indicator, also this leads to stop ajax submit of frame form
+                // if response (token) already was recieved, pass to next event handler
+                if (attr.val() !== '') {
+                    form.removeClass('ajax-loading');
+                    return true;
+                }
 
-				// if response (token) already was recieved, pass to next event handler
-				if (attr.val() !== '') {
-					form.removeClass('ajax-loading');
-					return true;
-				}
-
-				// fetch captcha token and call submit
-				// not support IE9 and less, you can use: if (window.ie9le) { ... }
+                // fetch captcha token and call submit
+                // not support IE9 and less, you can use: if (window.ie9le) { ... }
                 grecaptcha.ready(function () {
                     grecaptcha.execute('{$this->publicKey}', { action: '{$this->requestAction}' })
                         .then(function (token) {
+
                             form.removeClass('ajax-loading'); // hide ajax indicator
                             attr.val(token);
 
@@ -110,8 +113,9 @@ class Recaptchav3Widget extends InputWidget
                         });
                 });
 
-				return false; // stop activeForm submitting
-			});
+                return false; // stop activeForm submitting
+            });
+
 		";
 		$view->registerJs($js, $view::POS_END);
 

@@ -77,45 +77,54 @@ class Recaptchav3Widget extends InputWidget
         //   2. после получения токена
         // поэтому:
         // - вешаем на форму обработчик 'beforeSubmit' события в котором:
-        //   - если у формы стоит класс 'ajax-loading' пропускаем обработку (токен а процессе получения)
+        //   - если у формы стоит класс 'ajax-loading' пропускаем обработку (токен а процессе получения):
+        //      // skip if google request is perform (also in widget)
+        //  	if (form.hasClass('ajax-loading')) {
+        // 		    return false
+        // 		}
         // - иначе, возвращяем из обработчика 'false' (чтобы предотвратить нативную отправку) и делаем ajax запрос используя данные формы
 
         $js = /** @lang JavaScript */"
 	
-            var form = $('#{$formId}'); // get activeForm
-            
-            // add event handler (before yii js submit the form, prepare recaptcha token from google)
-            form.on('beforeSubmit', function (e) {
-                var form = $(e.target) // define form again, cause 'form' var will be replaced on using this script several times (on mupltiply captchas in one page)
+	        (function(){
+	
+                var form = $('#{$formId}'); // get activeForm
                 var attr = form.find('#{$inputId}'); // get attribute field
-                // console.log('widget: beforeSubmit')
-
-                form.addClass('ajax-loading'); // show ajax indicator, also this leads to stop ajax submit of frame form
-
-                // if response (token) already was recieved, pass to next event handler
-                if (attr.val() !== '') {
-                    form.removeClass('ajax-loading');
-                    return true;
-                }
-
-                // fetch captcha token and call submit
-                // not support IE9 and less, you can use: if (window.ie9le) { ... }
-                grecaptcha.ready(function () {
-                    grecaptcha.execute('{$this->publicKey}', { action: '{$this->requestAction}' })
-                        .then(function (token) {
-
-                            form.removeClass('ajax-loading'); // hide ajax indicator
-                            attr.val(token);
-
-                            // console.log('widget: submit')
-                            // submit form (also this leads to perform activeForm validation)
-                            form.submit();
-                        });
+                
+                // add event handler (before yii js submit the form, prepare recaptcha token from google)
+                form.on('beforeSubmit', function (e) {
+                    
+                    // console.log('widget: beforeSubmit')
+    
+                    form.addClass('ajax-loading'); // show ajax indicator, also this leads to stop ajax submit of frame form
+    
+                    // if response (token) already was recieved, pass to next event handler
+                    if (attr.val() !== '') {
+                        form.removeClass('ajax-loading');
+                        return true;
+                    }
+                    
+                    // console.log('widget: prepare');
+    
+                    // fetch captcha token and call submit
+                    // not support IE9 and less, you can use: if (window.ie9le) { ... }
+                    grecaptcha.ready(function () {
+                        grecaptcha.execute('{$this->publicKey}', { action: '{$this->requestAction}' })
+                            .then(function (token) {
+    
+                                form.removeClass('ajax-loading'); // hide ajax indicator
+                                attr.val(token);
+    
+                                // console.log('widget: submit')
+                                // submit form (also this leads to perform activeForm validation)
+                                form.submit();
+                            });
+                    });
+    
+                    return false; // stop activeForm submitting
                 });
 
-                return false; // stop activeForm submitting
-            });
-
+            })();
 		";
 		$view->registerJs($js, $view::POS_END);
 

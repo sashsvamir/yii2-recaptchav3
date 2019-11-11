@@ -1,6 +1,5 @@
 <?php
-namespace common\widgets\Recaptchav3;
-
+namespace sashsvamir\recaptchav3;
 
 use Yii;
 use yii\base\Exception;

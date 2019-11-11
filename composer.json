@@ -1,0 +1,15 @@
+{
+    "name": "sashsvamir/yii2-recaptchav3",
+    "type": "yii2-extension",
+    "require": {
+        "yiisoft/yii2-httpclient": "*",
+        "yiisoft/yii2": "~2.0.15"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alexander Shchukin",
+            "email": "1340068@gmail.com"
+        }
+    ]
+}

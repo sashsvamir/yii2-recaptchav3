@@ -104,7 +104,7 @@ class Recaptchav3Validator extends Validator
       Yii::$app->params['google.recaptcha3.response.score'] = $response['score'];
     }
 
-    $score = $response['score'];
+    $score = isset($response['score']) ? $response['score'] : null;
 
     if (!$score || (is_string($score) && trim($score) === '')) {
       return [$this->message . ' You have no score.', null];
